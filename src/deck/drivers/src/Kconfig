@@ -197,6 +197,15 @@ config DECK_FLOW
         distances in any direction or act as an aid for beginners where
         it creates a very stable flying platform.
 
+config DECK_RADAR
+    bool "Support the Radar pose deck"
+    select ESTIMATOR_KALMAN_ENABLE   # needed because we call the EKF
+    default y                        # flip to y when you want it compiled
+    help
+        Enables the Radar deck that delivers a 6-DoF pose (XYZ + quaternion)
+        and covariances over SPI.  The driver fuses the measurement into the
+        onboard Kalman estimator for fully-autonomous flight.
+
 config DECK_GTGPS
     bool "Support the GPS prototype deck (obsolete)"
     default n
