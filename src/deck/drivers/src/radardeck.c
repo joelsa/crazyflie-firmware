@@ -25,7 +25,7 @@
 
 #define BAUDRATE  1000000u
 #define PKT_SYNC  0xA5
-#define PKT_LEN   (1 + 4*4 + 1)   // 18 bytes
+#define PKT_LEN   38           // 38 bytes
 
 static float lastX, lastY, lastZ;
 static uint8_t poseValid;
@@ -71,15 +71,21 @@ static void radarTask(void *arg)
       buf[idx++] = byte;
       if (idx == PKT_LEN) {
         if (crc8_maxim(&buf[1], PKT_LEN - 2) == buf[PKT_LEN - 1]) {
-          float *f = (float *)&buf[1];
-          positionMeasurement_t m = {
-            .x = f[0], .y = f[1], .z = f[2],
-            .stdDev = f[3],
-            .source = MeasurementSourceLocationService,
-          };
-          estimatorEnqueuePosition(&m);
+          float vals[9];
+          for (int k = 0; k < 9; k++) {
+            memcpy(&vals[k], &buf[1 + k*4], 4);
+          }
 
-          lastX = f[0]; lastY = f[1]; lastZ = f[2]; poseValid = 1;
+          poseMeasurement_t m = {
+            .pos        = { vals[0], vals[1], vals[2] },
+            .quat       = { vals[3], vals[4], vals[5], vals[6] },
+            .stdDevPos  = vals[7],
+            .stdDevQuat = vals[8],
+          };
+
+          estimatorEnqueuePose(&m);
+
+          lastX = vals[0]; lastY = vals[1]; lastZ = vals[2]; poseValid = 1;
         }
         idx = 0;
       }
